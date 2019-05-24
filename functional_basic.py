@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer, StandardScaler
 import numpy as np
 
-
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+im_flatten_size = x_train.shape[1] * x_train.shape[2] * x_train.shape[3]
 x_train_new = x_train.reshape((x_train.shape[0], 3072))
 x_test_new = x_test.reshape((x_test.shape[0], 3072))
 
@@ -19,17 +19,6 @@ x_test_new = std_scaler.transform(x_test_new)
 lbl_binarize = LabelBinarizer().fit(y_train)
 y_train_bin = lbl_binarize.transform(y_train)
 y_test_bin = lbl_binarize.transform(y_test)
-
-n_row = 1000
-x1 = np.random.randn(n_row)
-x2 = np.random.randn(n_row)
-x3 = np.random.randn(n_row)
-y_data = np.array([1 if (x1[i] + x2[i] + (x3[i]) / 3 + np.random.randn(1) > 1) else 0 for i in range(n_row)])
-y_cts = x1 + x2 + x3 / 3 + np.random.randn(n_row)
-x_data = np.array([x1, x2, x3]).transpose()
-
-# Generate indexes of test and train
-x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.2, stratify=y_data)
 
 # Build the model with Functional API
 inputs = Input(shape=(3072,))
