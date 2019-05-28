@@ -1,11 +1,10 @@
 import os
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.preprocessing.text import Tokenizer, one_hot
 from tensorflow.python.keras.preprocessing.sequence import pad_sequences
 from keras.models import Input, Model
-from keras.layers import Dense, Embedding, LSTM, Flatten, Dropout
+from keras.layers import Dense, Embedding, Flatten, Dropout
 import re
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
@@ -43,6 +42,14 @@ def clean_text(text):
     return text
 
 
+def create_map_key_token(token_obj):
+    map_dictionary = dict()
+    for key, val in token_obj.word_index.items():
+        if val <= 6000:
+            map_dictionary[val] = key
+    return map_dictionary
+
+
 root = os.path.join(os.getcwd(), 'database')
 # df = load_original_dataset(root=root)
 df = pd.read_csv(os.path.join(root, 'imdb_master.csv'),  encoding="latin1")
@@ -65,6 +72,8 @@ tokenizer_obj.num_words = 6000
 x_train = tokenizer_obj.texts_to_sequences(train_set.ProcessedReviews)
 x_test = tokenizer_obj.texts_to_sequences(test_set.ProcessedReviews)
 
+# function that enable us to map the number to words
+map_dict = create_map_key_token(tokenizer_obj)
 
 x_train_norm = pad_sequences(x_train, maxlen=seq_length)
 x_test_norm = pad_sequences(x_test, maxlen=seq_length)
@@ -75,18 +84,21 @@ input_nn = Input(shape=(x_train_norm.shape[1], ))
 embedding = Embedding(6000, 256, input_length=seq_length, name='embedding')(input_nn)
 flatten = Flatten()(embedding)
 hidden = Dense(units=256, activation='relu', name='hidden_1')(flatten)
-hidden = Dropout(rate=0.25, name='dropout_1')(hidden)
+hidden = Dropout(rate=0.2, name='dropout_1')(hidden)
 hidden = Dense(units=128, activation='relu', name='hidden_2')(flatten)
+hidden = Dropout(rate=0.2, name='dropout_2')(hidden)
 output_nn = Dense(units=1, activation='sigmoid', name='output')(hidden)
 
 model_nn = Model(inputs=input_nn, outputs=output_nn)
 model_nn.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 model_nn.optimizer.lr = 0.01
-model_nn.fit(x=x_train_norm, y=y_train, batch_size=128,  epochs=2, validation_data=(x_test_norm, y_test))
+model_nn.fit(x=x_train_norm, y=y_train, batch_size=128,  epochs=5, validation_data=(x_test_norm, y_test))
 
+# get weight from the embedding layer
 book_layer = model_nn.get_layer('embedding')
 book_weights = book_layer.get_weights()[0]
-book_weights.shape
+
+# plot similarities
 
 
 
